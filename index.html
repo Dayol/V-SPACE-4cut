@@ -16,6 +16,7 @@
         #settings-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
 
+        /* 촬영화면 960px (1.5배) */
         #cam-box { position: relative; width: 960px; aspect-ratio: var(--cut-ratio); background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.15); margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
         video, #snap-preview { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scaleX(-1); width: auto; height: 100%; min-width: 100%; object-fit: cover; }
         #snap-preview { display: none; z-index: 10; border: 10px solid var(--brand-color); box-sizing: border-box; }
@@ -35,7 +36,7 @@
         #preview-canvas-container { background: white; padding: 12px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); }
         #final-preview-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2.6; display: block; background: #fff; }
 
-        button.main-btn { padding: 20px 40px; font-size: 20px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; }
+        button.main-btn { padding: 20px 40px; font-size: 20px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; text-align: center; }
         .primary { background: var(--brand-color); color: white; }
         .airdrop { background-color: #007AFF; color: white; }
         .reset-btn { background-color: #eee; color: #333; }
@@ -65,7 +66,7 @@
 
         <span class="setting-section-title">업로드 이미지 프레임</span>
         <input type="file" id="frame-input" accept="image/*" style="width:100%; margin-bottom:10px; font-size:12px;">
-        <label class="option-item"><input type="checkbox" id="custom-text-toggle"> 문구 표시</label>
+        <label class="option-item"><input type="checkbox" id="custom-text-toggle" checked> 문구 표시</label>
         <label class="option-item"><input type="checkbox" id="custom-date-toggle" checked> 날짜 표시</label>
         <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" checked> 글자 그림자 효과</label>
         
@@ -144,7 +145,7 @@
         let isBW = false, isBright = false;
         let frameMode = 'white', customFrameImg = null;
 
-        // 초기 이미지 로딩 (CORS 우회 설정 포함)
+        // 기본 대지 이미지 로딩
         customFrameImg = new Image();
         customFrameImg.crossOrigin = "anonymous";
         customFrameImg.src = '네컷대지 1.png';
@@ -248,17 +249,14 @@
             document.getElementById('go-next-btn').style.display = (selectedPhotos.length === 4) ? 'block' : 'none';
         }
 
-        /* [사파리 필터 대응 핵심 함수] */
         async function composeFinalImage() {
             if(selectedPhotos.length < 4) return;
             const cw = 800, ch = 2150; 
             previewCanvas.width = cw; previewCanvas.height = ch;
             
-            // 캔버스 초기화
             ctx.clearRect(0, 0, cw, ch);
             ctx.filter = 'none';
 
-            // 배경 그리기
             if(frameMode === 'custom' && customFrameImg && customFrameImg.complete) {
                 ctx.drawImage(customFrameImg, 0, 0, cw, ch);
             } else {
@@ -275,29 +273,18 @@
                     const img = new Image();
                     img.src = selectedPhotos[i];
                     await new Promise(r => img.onload = r);
-                    
                     ctx.save();
-                    
-                    // 사파리 대응용 필터 문자열 생성
                     let filterStr = '';
                     if(isBW) filterStr += 'grayscale(100%) ';
                     if(isBright) filterStr += 'brightness(1.2) contrast(1.1) ';
-                    
-                    // 필터 적용 전 상태 설정
                     ctx.filter = filterStr.trim() || 'none';
-                    
-                    // 좌우 반전 이미지 그리기
-                    ctx.translate(cw, 0); 
-                    ctx.scale(-1, 1);
+                    ctx.translate(cw, 0); ctx.scale(-1, 1);
                     ctx.drawImage(img, padH, y, photoW, photoH);
-                    
                     ctx.restore();
-                    // 사파리에서는 상태 복구 후 다시 명시적으로 필터를 꺼야 다음 요소에 영향을 안 줌
                     ctx.filter = 'none';
                 }
             }
 
-            // 텍스트 렌더링 (필터가 꺼진 상태여야 함)
             renderOverlayText(cw, ch, photoTop, photoH, photoGap);
         }
 
@@ -320,7 +307,7 @@
 
             if(showText || showDate) {
                 ctx.save();
-                ctx.filter = 'none'; // 텍스트에 필터 적용 방지
+                ctx.filter = 'none';
                 ctx.fillStyle = finalColor; ctx.textAlign = "center";
                 if(useShadow) {
                     ctx.shadowColor = (finalColor === 'white') ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
@@ -339,11 +326,22 @@
             }
         }
 
-        // 저장 및 공유 버튼 로직
+        /* 💾 [복구된 로직] 날짜 + 시간 + 초 파일명 생성 함수 */
+        function getFileName() {
+            const now = new Date();
+            const dateStr = now.getFullYear() + 
+                            String(now.getMonth() + 1).padStart(2, '0') + 
+                            String(now.getDate()).padStart(2, '0');
+            const timeStr = String(now.getHours()).padStart(2, '0') + 
+                            String(now.getMinutes()).padStart(2, '0') + 
+                            String(now.getSeconds()).padStart(2, '0');
+            return `V-SPACE_4cut_${dateStr}_${timeStr}.png`;
+        }
+
         document.getElementById('save-btn').onclick = function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             const link = document.createElement('a');
-            link.download = `V-SPACE_4cut_${Date.now()}.png`;
+            link.download = getFileName();
             link.href = previewCanvas.toDataURL('image/png', 1.0);
             link.click();
         };
@@ -351,9 +349,9 @@
         document.getElementById('airdrop-btn').onclick = async function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             previewCanvas.toBlob(async (blob) => {
-                const file = new File([blob], `V-SPACE.png`, { type: 'image/png' });
+                const file = new File([blob], getFileName(), { type: 'image/png' });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'V-SPACE' });
+                    await navigator.share({ files: [file], title: 'V-SPACE 네컷사진' });
                 } else {
                     document.getElementById('save-btn').click();
                 }
