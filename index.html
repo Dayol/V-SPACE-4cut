@@ -11,12 +11,6 @@
         .step-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 설정 모달 */
-        .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
-        #settings-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
-        .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
-
-        /* 촬영화면 960px (1.5배) */
         #cam-box { position: relative; width: 960px; aspect-ratio: var(--cut-ratio); background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.15); margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
         video, #snap-preview { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scaleX(-1); width: auto; height: 100%; min-width: 100%; object-fit: cover; }
         #snap-preview { display: none; z-index: 10; border: 10px solid var(--brand-color); box-sizing: border-box; }
@@ -43,6 +37,10 @@
         .frame-choice-btn { width: 100%; margin-top: 5px; padding: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 8px; font-size: 15px; }
         .frame-choice-btn.active { border-color: var(--brand-color); background: #fff0f0; }
 
+        /* 설정 모달 */
+        .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
+        #settings-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
+        .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
         .setting-section-title { font-weight: bold; font-size: 15px; margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 2px solid var(--brand-color); display: block; color: var(--brand-color); }
         .option-item { margin-bottom: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
@@ -145,11 +143,10 @@
         let isBW = false, isBright = false;
         let frameMode = 'white', customFrameImg = null;
 
-        // 기본 대지 이미지 로딩
         customFrameImg = new Image();
         customFrameImg.crossOrigin = "anonymous";
         customFrameImg.src = '네컷대지 1.png';
-        customFrameImg.onload = () => { if(selectedPhotos.length === 4) composeFinalImage(); };
+        customFrameImg.onload = () => { composeFinalImage(); };
 
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
@@ -228,10 +225,16 @@
                 div.innerHTML = `<img src="${src}"><div class="badge"></div>`;
                 div.onclick = () => {
                     const idx = selectedPhotos.indexOf(src);
-                    if(idx > -1) { selectedPhotos.splice(idx,1); div.classList.remove('selected'); }
-                    else if(selectedPhotos.length < 4) { selectedPhotos.push(src); div.classList.add('selected'); }
+                    if(idx > -1) { 
+                        selectedPhotos.splice(idx,1); 
+                        div.classList.remove('selected'); 
+                    }
+                    else if(selectedPhotos.length < 4) { 
+                        selectedPhotos.push(src); 
+                        div.classList.add('selected'); 
+                    }
                     updateBadges();
-                    composeFinalImage();
+                    composeFinalImage(); // 선택/취소할 때마다 즉시 합성 실행
                 };
                 photoGrid.appendChild(div);
             });
@@ -250,10 +253,9 @@
         }
 
         async function composeFinalImage() {
-            if(selectedPhotos.length < 4) return;
+            // [수정] 4장이 아니어도 그리도록 조건 완화
             const cw = 800, ch = 2150; 
             previewCanvas.width = cw; previewCanvas.height = ch;
-            
             ctx.clearRect(0, 0, cw, ch);
             ctx.filter = 'none';
 
@@ -282,9 +284,12 @@
                     ctx.drawImage(img, padH, y, photoW, photoH);
                     ctx.restore();
                     ctx.filter = 'none';
+                } else {
+                    // 선택되지 않은 칸은 연한 회색 배경
+                    ctx.fillStyle = "rgba(200,200,200,0.3)";
+                    ctx.fillRect(padH, y, photoW, photoH);
                 }
             }
-
             renderOverlayText(cw, ch, photoTop, photoH, photoGap);
         }
 
@@ -326,15 +331,10 @@
             }
         }
 
-        /* 💾 [복구된 로직] 날짜 + 시간 + 초 파일명 생성 함수 */
         function getFileName() {
             const now = new Date();
-            const dateStr = now.getFullYear() + 
-                            String(now.getMonth() + 1).padStart(2, '0') + 
-                            String(now.getDate()).padStart(2, '0');
-            const timeStr = String(now.getHours()).padStart(2, '0') + 
-                            String(now.getMinutes()).padStart(2, '0') + 
-                            String(now.getSeconds()).padStart(2, '0');
+            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
             return `V-SPACE_4cut_${dateStr}_${timeStr}.png`;
         }
 
