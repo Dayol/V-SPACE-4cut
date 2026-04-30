@@ -11,7 +11,7 @@
         .step-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 모달 공통 스타일 */
+        /* 모달 스타일 */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
         .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
@@ -25,7 +25,7 @@
         .countdown-num { font-size: 150px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
         .cut-indicator { font-size: 40px; margin-bottom: 15px; opacity: 0.9; }
 
-        /* 레이아웃 및 그리드 */
+        /* 레이아웃 */
         .split-layout { display: flex; gap: 50px; justify-content: center; align-items: flex-start; width: 100%; }
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; width: 800px; }
         .photo-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; border: 4px solid transparent; background: #ddd; aspect-ratio: var(--cut-ratio); }
@@ -37,16 +37,14 @@
         #preview-canvas-container { background: white; padding: 12px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); }
         #final-preview-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2.6; display: block; background: #fff; }
 
-        /* 버튼 스타일 복구 */
         button.main-btn { padding: 20px 40px; font-size: 18px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; text-align: center; }
         .primary { background: var(--brand-color); color: white; }
         .airdrop { background-color: #007AFF; color: white; }
         .print-btn { background-color: #4CAF50; color: white; }
         .reset-btn { background-color: #eee; color: #333; }
         
-        /* 3단계 컨트롤 버튼들만 너비 조정 */
         .action-button-group { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 25px; padding-top: 25px; border-top: 1px solid #ddd; }
-        .action-button-group button { width: 100%; padding: 20px 10px; } /* 내부 버튼은 꽉 차게 */
+        .action-button-group button { width: 100%; }
         .full-row { grid-column: 1 / -1; }
 
         .frame-choice-btn { width: 100%; margin-top: 5px; padding: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 8px; font-size: 15px; }
@@ -54,14 +52,21 @@
 
         .setting-section-title { font-weight: bold; font-size: 15px; margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 2px solid var(--brand-color); display: block; color: var(--brand-color); }
         .option-item { margin-bottom: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-
         .step3-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; text-align: left; width: 800px; }
         .control-group { display: flex; flex-direction: column; gap: 8px; }
 
-        /* 인쇄 모달 스타일 */
+        /* 인쇄 모달 */
         .print-modal-content { text-align: center; }
         .print-pw-input { width: 100px; padding: 8px; text-align: center; margin: 15px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
         .small-print-btn { padding: 10px 20px; font-size: 14px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
+
+        /* 인쇄 설정 */
+        #print-canvas { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-canvas { visibility: visible; display: block !important; position: fixed; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; }
+            @page { margin: 0; }
+        }
     </style>
 </head>
 <body>
@@ -81,15 +86,16 @@
         <input type="file" id="frame-input" accept="image/*" style="width:100%; margin-bottom:10px; font-size:12px;">
         <label class="option-item"><input type="checkbox" id="custom-text-toggle"> 문구 표시</label>
         <label class="option-item"><input type="checkbox" id="custom-date-toggle" checked> 날짜 표시</label>
-        <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" checked> 글자 그림자 효과</label>
-        <div style="font-size:13px; margin-top:5px;">글자 색상:
-            <label style="margin-left:10px;"><input type="radio" name="font-color" value="black"> 검정</label>
-            <label style="margin-left:5px;"><input type="radio" name="font-color" value="white" checked> 흰색</label>
+        <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" checked> 그림자 효과</label>
+        <div style="font-size:13px;">글자 색상:
+            <label><input type="radio" name="font-color" value="black"> 검정</label>
+            <label><input type="radio" name="font-color" value="white" checked> 흰색</label>
         </div>
-        <button onclick="applySettings()" class="primary" style="width:100%; margin-top:20px; padding:12px; border-radius:8px; border:none; cursor:pointer;">설정 적용</button>
+        <!-- [복구] applySettings 함수 연결 확인 -->
+        <button onclick="applySettings()" class="primary" style="width:100%; margin-top:20px; padding:12px; border:none; border-radius:8px; cursor:pointer;">설정 적용</button>
     </div>
 
-    <!-- 인쇄 보안 모달 -->
+    <!-- 인쇄 모달 -->
     <div id="print-modal" class="modal">
         <div class="print-modal-content">
             <h2 style="margin-bottom:10px;">🖨️ 사진 인쇄</h2>
@@ -109,7 +115,6 @@
                     <img id="snap-preview">
                     <div id="timer" style="color:white; font-size:40px;">시작을 눌러주세요</div>
                 </div>
-                <!-- [수정] 너비가 본문 내용에 맞춰지도록 함 -->
                 <button id="start-btn" class="main-btn primary">촬영 시작하기 (6회)</button>
             </div>
         </section>
@@ -146,7 +151,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="preview-panel">
                     <h3>미리보기</h3>
                     <div id="preview-canvas-container">
@@ -157,13 +161,17 @@
         </section>
     </div>
 
+    <canvas id="print-canvas"></canvas>
+
     <script>
         const video = document.getElementById('webcam');
         const snapPreview = document.getElementById('snap-preview');
         const timerEl = document.getElementById('timer');
         const photoGrid = document.getElementById('photo-grid');
         const previewCanvas = document.getElementById('final-preview-canvas');
+        const printCanvas = document.getElementById('print-canvas');
         const ctx = previewCanvas.getContext('2d');
+        const pCtx = printCanvas.getContext('2d');
         
         let capturedPhotos = [];
         let selectedPhotos = [];
@@ -173,8 +181,7 @@
         function initBackground() {
             customFrameImg = new Image();
             customFrameImg.crossOrigin = "anonymous";
-            customFrameImg.onload = () => { composeFinalImage(); };
-            customFrameImg.onerror = () => { customFrameImg = null; composeFinalImage(); };
+            customFrameImg.onload = () => composeFinalImage();
             customFrameImg.src = '네컷대지 1.png';
         }
         initBackground();
@@ -182,66 +189,57 @@
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
         function updateAllDynamicTexts() {
-            const inputText = document.getElementById('frame-text-input').value.trim();
-            const mainTitle = document.getElementById('main-title');
-            const customBtn = document.getElementById('btn-f-custom');
-            if(inputText) {
-                mainTitle.innerText = inputText + " 네컷사진";
-                customBtn.innerText = inputText + " 배경";
-            } else {
-                mainTitle.innerText = "네컷사진";
-                customBtn.innerText = "네컷사진 배경";
-            }
+            const txt = document.getElementById('frame-text-input').value.trim();
+            document.getElementById('main-title').innerText = txt ? txt + " 네컷사진" : "네컷사진";
+            document.getElementById('btn-f-custom').innerText = txt ? txt + " 배경" : "네컷사진 배경";
         }
 
+        // 모달 제어 함수 통합
         function toggleSettings() {
-            const m = document.getElementById('settings-modal');
-            const b = document.getElementById('backdrop');
-            const isV = m.style.display === 'block';
-            m.style.display = isV ? 'none' : 'block';
-            b.style.display = isV ? 'none' : 'block';
+            document.getElementById('settings-modal').style.display = 'block';
+            document.getElementById('backdrop').style.display = 'block';
         }
-
         function openPrintModal() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             document.getElementById('print-modal').style.display = 'block';
             document.getElementById('backdrop').style.display = 'block';
         }
-
         function closeAllModals() {
             document.getElementById('settings-modal').style.display = 'none';
             document.getElementById('print-modal').style.display = 'none';
             document.getElementById('backdrop').style.display = 'none';
         }
-
-        function executeFinalPrint() {
-            if(document.getElementById('print-password').value === '1357') {
-                closeAllModals();
-                window.print();
-            } else {
-                alert("비밀번호가 틀렸습니다.");
-            }
+        function applySettings() {
+            closeAllModals();
+            composeFinalImage();
         }
 
-        function applySettings() { closeAllModals(); composeFinalImage(); }
+        async function executeFinalPrint() {
+            if(document.getElementById('print-password').value === '1357') {
+                closeAllModals();
+                const singleW = 800, singleH = 2150, margin = 100;
+                printCanvas.width = (singleW * 2) + margin;
+                printCanvas.height = singleH;
+                pCtx.fillStyle = 'white';
+                pCtx.fillRect(0, 0, printCanvas.width, printCanvas.height);
 
-        document.getElementById('frame-input').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => { customFrameImg = img; composeFinalImage(); };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
+                const finalImg = new Image();
+                finalImg.src = previewCanvas.toDataURL('image/png');
+                await new Promise(r => finalImg.onload = r);
+
+                pCtx.drawImage(finalImg, 0, 0, singleW, singleH);
+                pCtx.drawImage(finalImg, singleW + margin, 0, singleW, singleH);
+                window.print();
+            } else { alert("비밀번호가 틀렸습니다."); }
+        }
 
         document.getElementById('start-btn').onclick = async function() {
             this.disabled = true; capturedPhotos = [];
             const vW = video.videoWidth, vH = video.videoHeight;
-            const targetRatio = 16/10;
+            const ratio = 16/10;
             let cW, cH, cX, cY;
-            if(vW/vH > targetRatio) { cH=vH; cW=vH*targetRatio; cX=(vW-cW)/2; cY=0; }
-            else { cW=vW; cH=vW/targetRatio; cX=0; cY=(vH-cH)/2; }
+            if(vW/vH > ratio) { cH=vH; cW=vH*ratio; cX=(vW-cW)/2; cY=0; }
+            else { cW=vW; cH=vW/ratio; cX=0; cY=(vH-cH)/2; }
 
             for(let i=1; i<=6; i++) {
                 await countdown(5, i);
@@ -258,14 +256,14 @@
             document.getElementById('step-common').classList.add('active');
         };
 
-        function countdown(sec, currentCut) { 
+        function countdown(sec, cur) { 
             return new Promise(resolve => { 
                 let c = sec; 
-                timerEl.innerHTML = `<div class="cut-indicator">${currentCut} / 6</div><div class="countdown-num">${c}</div>`;
+                timerEl.innerHTML = `<div class="cut-indicator">${cur} / 6</div><div class="countdown-num">${c}</div>`;
                 const itv = setInterval(() => { 
                     c--; 
-                    if(c > 0) timerEl.innerHTML = `<div class="cut-indicator">${currentCut} / 6</div><div class="countdown-num">${c}</div>`;
-                    else { clearInterval(itv); timerEl.innerHTML = `<div class="cut-indicator">${currentCut} / 6</div><div class="countdown-num" style="font-size: 80px;">📸</div>`; resolve(); }
+                    if(c > 0) timerEl.innerHTML = `<div class="cut-indicator">${cur} / 6</div><div class="countdown-num">${c}</div>`;
+                    else { clearInterval(itv); timerEl.innerHTML = `<div class="cut-indicator">${cur} / 6</div><div class="countdown-num" style="font-size: 80px;">📸</div>`; resolve(); }
                 }, 1000); 
             }); 
         }
@@ -279,8 +277,7 @@
                     const idx = selectedPhotos.indexOf(src);
                     if(idx > -1) { selectedPhotos.splice(idx,1); div.classList.remove('selected'); }
                     else if(selectedPhotos.length < 4) { selectedPhotos.push(src); div.classList.add('selected'); }
-                    updateBadges();
-                    composeFinalImage();
+                    updateBadges(); composeFinalImage();
                 };
                 photoGrid.appendChild(div);
             });
@@ -289,13 +286,12 @@
 
         function updateBadges() {
             document.querySelectorAll('.photo-card').forEach(card => {
-                const imgSource = card.querySelector('img').src;
                 const badge = card.querySelector('.badge');
-                const sIdx = selectedPhotos.indexOf(imgSource);
-                if(sIdx > -1) { badge.innerText = sIdx + 1; badge.style.display = 'flex'; }
-                else { badge.style.display = 'none'; }
+                const sIdx = selectedPhotos.indexOf(card.querySelector('img').src);
+                badge.innerText = sIdx + 1;
+                badge.style.display = sIdx > -1 ? 'flex' : 'none';
             });
-            document.getElementById('go-next-btn').style.display = (selectedPhotos.length === 4) ? 'block' : 'none';
+            document.getElementById('go-next-btn').style.display = selectedPhotos.length === 4 ? 'block' : 'none';
         }
 
         async function composeFinalImage() {
@@ -317,22 +313,17 @@
             for(let i=0; i<4; i++) {
                 const y = photoTop + (i * (photoH + photoGap));
                 if(selectedPhotos[i]) {
-                    const img = new Image();
-                    img.src = selectedPhotos[i];
+                    const img = new Image(); img.src = selectedPhotos[i];
                     await new Promise(r => img.onload = r);
                     ctx.save();
-                    let filterStr = '';
-                    if(isBW) filterStr += 'grayscale(100%) ';
-                    if(isBright) filterStr += 'brightness(1.2) contrast(1.1) ';
-                    ctx.filter = filterStr.trim() || 'none';
+                    let f = [];
+                    if(isBW) f.push('grayscale(100%)');
+                    if(isBright) f.push('brightness(1.2) contrast(1.1)');
+                    ctx.filter = f.length > 0 ? f.join(' ') : 'none';
                     ctx.translate(cw, 0); ctx.scale(-1, 1);
                     ctx.drawImage(img, padH, y, photoW, photoH);
                     ctx.restore();
-                    ctx.filter = 'none';
-                } else {
-                    ctx.fillStyle = "rgba(200,200,200,0.3)";
-                    ctx.fillRect(padH, y, photoW, photoH);
-                }
+                } else { ctx.fillStyle = "rgba(200,200,200,0.3)"; ctx.fillRect(padH, y, photoW, photoH); }
             }
             renderOverlayText(cw, ch, photoTop, photoH, photoGap);
         }
@@ -343,8 +334,7 @@
                 showText = document.getElementById('custom-text-toggle').checked;
                 showDate = document.getElementById('custom-date-toggle').checked;
                 useShadow = document.getElementById('custom-shadow-toggle').checked;
-                const fontColorEl = document.querySelector('input[name="font-color"]:checked');
-                finalColor = fontColorEl ? fontColorEl.value : 'white';
+                finalColor = document.querySelector('input[name="font-color"]:checked').value === 'white' ? 'white' : 'black';
             } else {
                 showText = document.getElementById('base-text-toggle').checked;
                 showDate = document.getElementById('base-date-toggle').checked;
@@ -375,52 +365,46 @@
             }
         }
 
-        function getFileName() {
-            const now = new Date();
-            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-            const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0') + String(now.getSeconds()).padStart(2, '0');
-            return `V-SPACE_4cut_${dateStr}_${timeStr}.png`;
-        }
+        document.getElementById('frame-input').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => { customFrameImg = img; composeFinalImage(); };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
 
         document.getElementById('save-btn').onclick = function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
+            const now = new Date();
+            const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+            const timeStr = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
             const link = document.createElement('a');
-            link.download = getFileName();
+            link.download = `V-SPACE_4cut_${dateStr}_${timeStr}.png`;
             link.href = previewCanvas.toDataURL('image/png', 1.0);
             link.click();
         };
 
         document.getElementById('airdrop-btn').onclick = async function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
+            const now = new Date();
+            const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
+            const timeStr = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
             previewCanvas.toBlob(async (blob) => {
-                const file = new File([blob], getFileName(), { type: 'image/png' });
+                const file = new File([blob], `V-SPACE_4cut_${dateStr}_${timeStr}.png`, { type: 'image/png' });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({ files: [file], title: 'V-SPACE 네컷사진' });
-                } else {
-                    document.getElementById('save-btn').click();
-                }
+                } else { document.getElementById('save-btn').click(); }
             });
         };
 
-        function resetApp() { 
-            if(!confirm("다시 촬영하시겠습니까?")) return;
-            location.reload(); 
-        }
-
-        function changeFrameMode(mode) {
-            frameMode = mode;
-            document.querySelectorAll('.frame-choice-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-f-${mode}`).classList.add('active');
-            composeFinalImage();
-        }
-        document.getElementById('go-next-btn').onclick = () => {
-            document.getElementById('title-step-2').style.display = 'none';
-            document.getElementById('title-step-3').style.display = 'block';
-            composeFinalImage();
-        };
+        function resetApp() { if(!confirm("다시 촬영하시겠습니까?")) return; location.reload(); }
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function changeFrameMode(mode) { frameMode = mode; document.querySelectorAll('.frame-choice-btn').forEach(b => b.classList.remove('active')); document.getElementById(`btn-f-${mode}`).classList.add('active'); composeFinalImage(); }
+        document.getElementById('go-next-btn').onclick = () => { document.getElementById('title-step-2').style.display = 'none'; document.getElementById('title-step-3').style.display = 'block'; composeFinalImage(); };
         function toggleFilter() { isBW = !isBW; document.getElementById('filter-btn').innerText = `흑백 필터: ${isBW ? 'ON' : 'OFF'}`; composeFinalImage(); }
         function toggleBright() { isBright = !isBright; document.getElementById('bright-btn').innerText = `밝게 필터: ${isBright ? 'ON' : 'OFF'}`; composeFinalImage(); }
-        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
     </script>
 </body>
 </html>
