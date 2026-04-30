@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <title>V-SPACE 네컷사진 Pro</title>
     <style>
-        :root { --brand-color: #ff6b6b; --bg-gray: #f4f4f4; --cut-ratio: 16/10; }
+        :root { --brand-color: #ff6b6b; --bg-gray: #f4f4f4; --cut-ratio: 1.5; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-gray); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #333; }
         .app-container { width: 100%; max-width: 1200px; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
         .step-section { display: none; width: 100%; animation: fadeIn 0.4s; }
         .step-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 모달 스타일 */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
         .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
 
-        /* 촬영화면 960px */
         #cam-box { position: relative; width: 960px; aspect-ratio: var(--cut-ratio); background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.15); margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
         video, #snap-preview { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scaleX(-1); width: auto; height: 100%; min-width: 100%; object-fit: cover; }
         #snap-preview { display: none; z-index: 10; border: 10px solid var(--brand-color); box-sizing: border-box; }
@@ -25,7 +23,6 @@
         .countdown-num { font-size: 150px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
         .cut-indicator { font-size: 40px; margin-bottom: 15px; opacity: 0.9; }
 
-        /* 레이아웃 */
         .split-layout { display: flex; gap: 50px; justify-content: center; align-items: flex-start; width: 100%; }
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; width: 800px; }
         .photo-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; border: 4px solid transparent; background: #ddd; aspect-ratio: var(--cut-ratio); }
@@ -35,7 +32,7 @@
 
         .preview-panel { width: 320px; text-align: center; }
         #preview-canvas-container { background: white; padding: 12px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); }
-        #final-preview-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2.6; display: block; background: #fff; }
+        #final-preview-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2.96; display: block; background: #fff; }
 
         button.main-btn { padding: 20px 40px; font-size: 18px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; text-align: center; }
         .primary { background: var(--brand-color); color: white; }
@@ -55,13 +52,12 @@
         .step3-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; text-align: left; width: 800px; }
         .control-group { display: flex; flex-direction: column; gap: 8px; }
 
-        /* 인쇄 모달 */
         .print-modal-content { text-align: center; }
         .print-pw-input { width: 100px; padding: 8px; text-align: center; margin: 15px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
         .small-print-btn { padding: 10px 20px; font-size: 14px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
 
-        /* 인쇄 설정 */
         #print-canvas { display: none; }
+
         @media print {
             body * { visibility: hidden; }
             #print-canvas { visibility: visible; display: block !important; position: fixed; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -74,7 +70,6 @@
     <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
     <div class="modal-backdrop" id="backdrop" onclick="closeAllModals()"></div>
 
-    <!-- 설정 모달 -->
     <div id="settings-modal" class="modal">
         <h3 style="margin-top:0">⚙️ 프레임 개별 설정</h3>
         <span class="setting-section-title">공통 문구 입력</span>
@@ -84,18 +79,16 @@
         <label class="option-item"><input type="checkbox" id="base-date-toggle" checked> 날짜 표시</label>
         <span class="setting-section-title">업로드 이미지 프레임</span>
         <input type="file" id="frame-input" accept="image/*" style="width:100%; margin-bottom:10px; font-size:12px;">
-        <label class="option-item"><input type="checkbox" id="custom-text-toggle"> 문구 표시</label>
+        <label class="option-item"><input type="checkbox" id="custom-text-toggle" checked> 문구 표시</label>
         <label class="option-item"><input type="checkbox" id="custom-date-toggle" checked> 날짜 표시</label>
         <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" checked> 그림자 효과</label>
         <div style="font-size:13px;">글자 색상:
             <label><input type="radio" name="font-color" value="black"> 검정</label>
             <label><input type="radio" name="font-color" value="white" checked> 흰색</label>
         </div>
-        <!-- [복구] applySettings 함수 연결 확인 -->
         <button onclick="applySettings()" class="primary" style="width:100%; margin-top:20px; padding:12px; border:none; border-radius:8px; cursor:pointer;">설정 적용</button>
     </div>
 
-    <!-- 인쇄 모달 -->
     <div id="print-modal" class="modal">
         <div class="print-modal-content">
             <h2 style="margin-bottom:10px;">🖨️ 사진 인쇄</h2>
@@ -182,7 +175,7 @@
             customFrameImg = new Image();
             customFrameImg.crossOrigin = "anonymous";
             customFrameImg.onload = () => composeFinalImage();
-            customFrameImg.src = '네컷대지 1.png';
+            customFrameImg.src = '네컷대지2.png';
         }
         initBackground();
 
@@ -194,7 +187,6 @@
             document.getElementById('btn-f-custom').innerText = txt ? txt + " 배경" : "네컷사진 배경";
         }
 
-        // 모달 제어 함수 통합
         function toggleSettings() {
             document.getElementById('settings-modal').style.display = 'block';
             document.getElementById('backdrop').style.display = 'block';
@@ -217,8 +209,8 @@
         async function executeFinalPrint() {
             if(document.getElementById('print-password').value === '1357') {
                 closeAllModals();
-                const singleW = 800, singleH = 2150, margin = 100;
-                printCanvas.width = (singleW * 2) + margin;
+                const singleW = 800, singleH = 2368;
+                printCanvas.width = singleW * 2;
                 printCanvas.height = singleH;
                 pCtx.fillStyle = 'white';
                 pCtx.fillRect(0, 0, printCanvas.width, printCanvas.height);
@@ -228,7 +220,7 @@
                 await new Promise(r => finalImg.onload = r);
 
                 pCtx.drawImage(finalImg, 0, 0, singleW, singleH);
-                pCtx.drawImage(finalImg, singleW + margin, 0, singleW, singleH);
+                pCtx.drawImage(finalImg, singleW, 0, singleW, singleH);
                 window.print();
             } else { alert("비밀번호가 틀렸습니다."); }
         }
@@ -236,7 +228,7 @@
         document.getElementById('start-btn').onclick = async function() {
             this.disabled = true; capturedPhotos = [];
             const vW = video.videoWidth, vH = video.videoHeight;
-            const ratio = 16/10;
+            const ratio = 1.5; 
             let cW, cH, cX, cY;
             if(vW/vH > ratio) { cH=vH; cW=vH*ratio; cX=(vW-cW)/2; cY=0; }
             else { cW=vW; cH=vW/ratio; cX=0; cY=(vH-cH)/2; }
@@ -244,8 +236,8 @@
             for(let i=1; i<=6; i++) {
                 await countdown(5, i);
                 const canvas = document.createElement('canvas');
-                canvas.width = 1280; canvas.height = 800;
-                canvas.getContext('2d').drawImage(video, cX, cY, cW, cH, 0, 0, 1280, 800);
+                canvas.width = 1200; canvas.height = 800; 
+                canvas.getContext('2d').drawImage(video, cX, cY, cW, cH, 0, 0, 1200, 800);
                 const data = canvas.toDataURL('image/png');
                 snapPreview.src = data; snapPreview.style.display = 'block';
                 await sleep(1500); snapPreview.style.display = 'none';
@@ -295,7 +287,7 @@
         }
 
         async function composeFinalImage() {
-            const cw = 800, ch = 2150; 
+            const cw = 800, ch = 2368; 
             previewCanvas.width = cw; previewCanvas.height = ch;
             ctx.clearRect(0, 0, cw, ch);
             ctx.filter = 'none';
@@ -308,7 +300,8 @@
             }
 
             const padH = 40, photoTop = 40, photoGap = 25;
-            const photoW = cw - (padH * 2), photoH = photoW / (16/10);
+            const photoW = cw - (padH * 2);
+            const photoH = photoW / 1.5; 
 
             for(let i=0; i<4; i++) {
                 const y = photoTop + (i * (photoH + photoGap));
@@ -342,7 +335,7 @@
             }
 
             const photoBottom = photoTop + (4 * photoH) + (3 * photoGap);
-            const textY = photoBottom + 75; 
+            const textY = photoBottom + ((ch - photoBottom) / 2);
 
             if(showText || showDate) {
                 ctx.save();
@@ -354,12 +347,16 @@
                 }
                 if(showText) {
                     const txt = document.getElementById('frame-text-input').value;
-                    if(txt) { ctx.font = "bold 55px sans-serif"; ctx.fillText(txt, cw/2, textY + 30); }
+                    if(txt) { 
+                        ctx.font = "bold 70px sans-serif"; // [변경] 55px -> 82.5px (1.5배)
+                        ctx.fillText(txt, cw/2, textY - 40); 
+                    }
                 }
                 if(showDate) {
                     const now = new Date();
                     const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-                    ctx.font = "30px sans-serif"; ctx.fillText(dStr, cw/2, textY + 90);
+                    ctx.font = "40px sans-serif"; // [변경] 30px -> 45px (1.5배)
+                    ctx.fillText(dStr, cw/2, textY + 25); // 폰트가 커짐에 따라 텍스트 간격 조정
                 }
                 ctx.restore();
             }
