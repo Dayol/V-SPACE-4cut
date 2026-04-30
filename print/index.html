@@ -191,23 +191,38 @@
             document.getElementById('settings-modal').style.display = 'block';
             document.getElementById('backdrop').style.display = 'block';
         }
+
+        /* [수정] 인쇄 모달 열기 시 비밀번호 초기화 */
         function openPrintModal() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
+            
+            // 비밀번호 칸 초기화
+            const pwInput = document.getElementById('print-password');
+            if(pwInput) pwInput.value = ''; 
+            
             document.getElementById('print-modal').style.display = 'block';
             document.getElementById('backdrop').style.display = 'block';
         }
+
+        /* [수정] 모든 모달 닫기 시 비밀번호 초기화 */
         function closeAllModals() {
             document.getElementById('settings-modal').style.display = 'none';
             document.getElementById('print-modal').style.display = 'none';
             document.getElementById('backdrop').style.display = 'none';
+            
+            const pwInput = document.getElementById('print-password');
+            if(pwInput) pwInput.value = '';
         }
+
         function applySettings() {
             closeAllModals();
             composeFinalImage();
         }
 
+        /* [수정] 인쇄 로직 및 비밀번호 오답 시 초기화 */
         async function executeFinalPrint() {
-            if(document.getElementById('print-password').value === '1357') {
+            const pwInput = document.getElementById('print-password');
+            if(pwInput.value === '1357') {
                 closeAllModals();
                 const singleW = 800, singleH = 2368;
                 printCanvas.width = singleW * 2;
@@ -222,7 +237,11 @@
                 pCtx.drawImage(finalImg, 0, 0, singleW, singleH);
                 pCtx.drawImage(finalImg, singleW, 0, singleW, singleH);
                 window.print();
-            } else { alert("비밀번호가 틀렸습니다."); }
+            } else { 
+                alert("비밀번호가 틀렸습니다.");
+                pwInput.value = ''; // 틀렸을 때 초기화
+                pwInput.focus();
+            }
         }
 
         document.getElementById('start-btn').onclick = async function() {
@@ -348,15 +367,15 @@
                 if(showText) {
                     const txt = document.getElementById('frame-text-input').value;
                     if(txt) { 
-                        ctx.font = "bold 70px sans-serif"; // [변경] 55px -> 82.5px (1.5배)
-                        ctx.fillText(txt, cw/2, textY - 40); 
+                        ctx.font = "bold 70px sans-serif"; 
+                        ctx.fillText(txt, cw/2, textY - 35); 
                     }
                 }
                 if(showDate) {
                     const now = new Date();
                     const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-                    ctx.font = "40px sans-serif"; // [변경] 30px -> 45px (1.5배)
-                    ctx.fillText(dStr, cw/2, textY + 25); // 폰트가 커짐에 따라 텍스트 간격 조정
+                    ctx.font = "40px sans-serif"; 
+                    ctx.fillText(dStr, cw/2, textY + 25); 
                 }
                 ctx.restore();
             }
