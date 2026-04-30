@@ -11,10 +11,10 @@
         .step-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 설정 및 인쇄 모달 */
-        .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
+        /* 모달 공통 스타일 */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
+        .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
 
         /* 촬영화면 960px */
         #cam-box { position: relative; width: 960px; aspect-ratio: var(--cut-ratio); background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.15); margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
@@ -25,26 +25,29 @@
         .countdown-num { font-size: 150px; text-shadow: 0 4px 20px rgba(0,0,0,0.6); }
         .cut-indicator { font-size: 40px; margin-bottom: 15px; opacity: 0.9; }
 
+        /* 레이아웃 및 그리드 */
         .split-layout { display: flex; gap: 50px; justify-content: center; align-items: flex-start; width: 100%; }
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; width: 800px; }
         .photo-card { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; border: 4px solid transparent; background: #ddd; aspect-ratio: var(--cut-ratio); }
         .photo-card img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         .photo-card.selected { border-color: var(--brand-color); }
-        .badge { position: absolute; top: 12px; right: 12px; background: var(--brand-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 5; }
+        .badge { position: absolute; top: 12px; right: 12px; background: var(--brand-color); color: white; width: 35px; height: 35px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; z-index: 5; }
 
         .preview-panel { width: 320px; text-align: center; }
         #preview-canvas-container { background: white; padding: 12px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.08); }
         #final-preview-canvas { width: 100%; height: auto; aspect-ratio: 1 / 2.6; display: block; background: #fff; }
 
-        /* 버튼 레이아웃 수정 */
-        button.main-btn { padding: 20px 30px; font-size: 18px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; text-align: center; width: 100%; }
+        /* 버튼 스타일 복구 */
+        button.main-btn { padding: 20px 40px; font-size: 18px; font-weight: bold; border-radius: 14px; border: none; cursor: pointer; transition: 0.2s; box-sizing: border-box; text-align: center; }
         .primary { background: var(--brand-color); color: white; }
         .airdrop { background-color: #007AFF; color: white; }
         .print-btn { background-color: #4CAF50; color: white; }
         .reset-btn { background-color: #eee; color: #333; }
         
+        /* 3단계 컨트롤 버튼들만 너비 조정 */
         .action-button-group { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 25px; padding-top: 25px; border-top: 1px solid #ddd; }
-        .full-row { grid-column: 1 / -1; } /* 다시 촬영하기를 밑의 행으로 보내기 위함 */
+        .action-button-group button { width: 100%; padding: 20px 10px; } /* 내부 버튼은 꽉 차게 */
+        .full-row { grid-column: 1 / -1; }
 
         .frame-choice-btn { width: 100%; margin-top: 5px; padding: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 8px; font-size: 15px; }
         .frame-choice-btn.active { border-color: var(--brand-color); background: #fff0f0; }
@@ -100,12 +103,13 @@
     <div class="app-container">
         <section id="step-1" class="step-section active">
             <div style="display:flex; flex-direction:column; align-items:center;">
-                <h1 id="main-title" style="font-size: 3rem; margin-bottom: 25px;">V-SPACE 네컷사진</h1>
+                <h1 id="main-title" style="font-size: 3.5rem; margin-bottom: 25px;">V-SPACE 네컷사진</h1>
                 <div id="cam-box">
                     <video id="webcam" autoplay playsinline></video>
                     <img id="snap-preview">
                     <div id="timer" style="color:white; font-size:40px;">시작을 눌러주세요</div>
                 </div>
+                <!-- [수정] 너비가 본문 내용에 맞춰지도록 함 -->
                 <button id="start-btn" class="main-btn primary">촬영 시작하기 (6회)</button>
             </div>
         </section>
@@ -133,7 +137,6 @@
                                 <button class="frame-choice-btn" id="bright-btn" onclick="toggleBright()">밝게 필터: OFF</button>
                                 <button class="frame-choice-btn" id="filter-btn" onclick="toggleFilter()">흑백 필터: OFF</button>
                             </div>
-                            <!-- [수정] 버튼 레이아웃 구조 변경 -->
                             <div class="action-button-group">
                                 <button id="save-btn" class="main-btn primary">이미지 저장</button>
                                 <button id="airdrop-btn" class="main-btn airdrop">공유/에어드롭</button>
@@ -178,6 +181,19 @@
 
         navigator.mediaDevices.getUserMedia({ video: true }).then(s => video.srcObject = s);
 
+        function updateAllDynamicTexts() {
+            const inputText = document.getElementById('frame-text-input').value.trim();
+            const mainTitle = document.getElementById('main-title');
+            const customBtn = document.getElementById('btn-f-custom');
+            if(inputText) {
+                mainTitle.innerText = inputText + " 네컷사진";
+                customBtn.innerText = inputText + " 배경";
+            } else {
+                mainTitle.innerText = "네컷사진";
+                customBtn.innerText = "네컷사진 배경";
+            }
+        }
+
         function toggleSettings() {
             const m = document.getElementById('settings-modal');
             const b = document.getElementById('backdrop');
@@ -190,7 +206,6 @@
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             document.getElementById('print-modal').style.display = 'block';
             document.getElementById('backdrop').style.display = 'block';
-            document.getElementById('print-password').value = '';
         }
 
         function closeAllModals() {
@@ -200,8 +215,7 @@
         }
 
         function executeFinalPrint() {
-            const pw = document.getElementById('print-password').value;
-            if(pw === '1357') {
+            if(document.getElementById('print-password').value === '1357') {
                 closeAllModals();
                 window.print();
             } else {
