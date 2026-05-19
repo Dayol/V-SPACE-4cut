@@ -65,6 +65,9 @@
         .layout-card:hover { border-color: var(--brand-color); }
         .layout-card img { width: 100%; max-width: 140px; height: auto; border: 1px solid #ddd; display: block; margin: 0 auto 20px; border-radius: 4px; }
 
+        /* 💡 [수정] 설정창 하단 카피라이트 전용 스타일 추가 */
+        .settings-copyright { text-align: center; font-size: 12px; color: #888; margin-top: 20px; line-height: 1.4; border-top: 1px dashed #eee; padding-top: 15px; }
+
         @media print {
             body * { visibility: hidden; }
             #print-canvas { visibility: visible; display: block !important; position: fixed; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; }
@@ -99,12 +102,17 @@
             <label><input type="radio" name="font-color" value="white" checked> 흰색</label>
         </div>
         <button onclick="applySettings()" class="primary" style="width:100%; margin-top:20px; padding:12px; border:none; border-radius:8px; cursor:pointer;">설정 적용</button>
+        
+        <div class="settings-copyright">
+            © 2026 Dayol. All rights reserved.<br>
+            Contact : daeun7@pusan.ac.kr
+        </div>
     </div>
 
     <div id="print-modal" class="modal">
         <div class="print-modal-content">
             <h2 style="margin-bottom:10px;">🖨️ 사진 인쇄</h2>
-            <p style="font-weight: bold; color: var(--brand-color);">인쇄기능 준비중입니다</p>
+            <p style="font-weight: bold; color: var(--brand-color);">카운터로 문의하세요</p>
             <input type="password" id="print-password" class="print-pw-input" placeholder="비밀번호" maxlength="4">
             <br>
             <button onclick="executeFinalPrint()" class="small-print-btn">진짜 인쇄하기</button>
@@ -277,7 +285,6 @@
             composeFinalImage();
         }
 
-        /* 💡 [보완] 캔버스 오염 에러(Tainted canvas)를 완벽하게 차단하도록 인쇄 복사 연산 수정 */
         async function executeFinalPrint() {
             const pwInput = document.getElementById('print-password');
             if(pwInput.value === '1357') {
@@ -288,8 +295,6 @@
                     printCanvas.height = 2368;
                     pCtx.fillStyle = 'white';
                     pCtx.fillRect(0, 0, printCanvas.width, printCanvas.height);
-
-                    // 💡 [핵심] toDataURL 스트림 변환을 거치지 않고 오염되지 않은 DOM 객체 자체를 캔버스 레이어로 직접 복제해 우회합니다.
                     pCtx.drawImage(previewCanvas, 0, 0, printCanvas.width, printCanvas.height);
                 } else {
                     const singleW = 800, singleH = 2368;
@@ -297,8 +302,6 @@
                     printCanvas.height = singleH;
                     pCtx.fillStyle = 'white';
                     pCtx.fillRect(0, 0, printCanvas.width, printCanvas.height);
-
-                    // 💡 [핵심] 네컷사진 좌우 복사 2열도 동일하게 다이렉트 드로잉 기법 매핑으로 우회 완료
                     pCtx.drawImage(previewCanvas, 0, 0, singleW, singleH);
                     pCtx.drawImage(previewCanvas, singleW, 0, singleW, singleH);
                 }
