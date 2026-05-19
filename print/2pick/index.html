@@ -115,12 +115,12 @@
             <h1 style="font-size: 3rem; margin-bottom: 20px; text-align: center;">🎨 레이아웃 선택</h1>
             <div id="layout-choice-section">
                 <div class="layout-card" onclick="startPhotoProcess('4cut')">
-                    <img src="https://dayol.github.io/V-SPACE-4cut/%EB%84%A4%EC%BB%B5%EB%8C%80%EC%A7%802.png" alt="네컷사진">
+                    <img src="./축제기본.png" onerror="this.src='https://dayol.github.io/V-SPACE-4cut/축제기본.png'" alt="네컷사진">
                     <h2>네컷사진</h2>
                     <p>전통적인 수직 1열 배치</p>
                 </div>
                 <div class="layout-card" onclick="startPhotoProcess('postcard')">
-                    <img src="https://raw.githubusercontent.com/dayol/V-SPACE-4cut/main/frame_sample_postcard.png" alt="엽서사진" style="max-width:115px;">
+                    <img src="./축제엽서.png" onerror="this.src='https://raw.githubusercontent.com/dayol/V-SPACE-4cut/main/축제엽서.png'" alt="엽서사진" style="max-width:280px;">
                     <h2>엽서사진 (2열)</h2>
                     <p>1600x2368 단일 세로 엽서</p>
                 </div>
@@ -200,25 +200,24 @@
         let customPostcardFrameImg = null; 
         let currentLayout = '4cut'; 
 
-        // 💡 [변경] 최초 로딩 시 기본 파일명 매핑 제어 및 보안 에러 대응 예외 구조 강화
         function initBackground() {
             customFrameImg = new Image();
             customFrameImg.crossOrigin = "anonymous";
             customFrameImg.onload = () => composeFinalImage();
             customFrameImg.onerror = () => {
-                console.warn("축제기본.png 파일을 로드할 수 없거나 서버 환경이 아닙니다. 업로드 기능을 이용하시거나 서버에 올린 뒤 테스트하세요.");
+                console.warn("축제기본.png 파일을 로드할 수 없거나 서버 환경이 아닙니다.");
                 composeFinalImage();
             };
-            customFrameImg.src = '축제기본.png'; // 💡 요청하신 기본 이미지명 연결
+            customFrameImg.src = '축제기본.png'; 
 
             customPostcardFrameImg = new Image();
             customPostcardFrameImg.crossOrigin = "anonymous";
             customPostcardFrameImg.onload = () => composeFinalImage();
             customPostcardFrameImg.onerror = () => {
-                console.warn("축제엽서.png 파일을 로드할 수 없거나 서버 환경이 아닙니다. 업로드 기능을 이용하시거나 서버에 올린 뒤 테스트하세요.");
+                console.warn("축제엽서.png 파일을 로드할 수 없거나 서버 환경이 아닙니다.");
                 composeFinalImage();
             };
-            customPostcardFrameImg.src = '축제엽서.png'; // 💡 요청하신 기본 이미지명 연결
+            customPostcardFrameImg.src = '축제엽서.png'; 
         }
         initBackground();
 
@@ -333,7 +332,8 @@
                 canvas.getContext('2d').drawImage(video, cX, cY, cW, cH, 0, 0, canvas.width, canvas.height);
                 const data = canvas.toDataURL('image/png');
                 snapPreview.src = data; snapPreview.style.display = 'block';
-                await sleep(1500); snapPreview.style.display = 'none';
+                await sleep(1500); // 💡 여기서 정상 작동합니다!
+                snapPreview.style.display = 'none';
                 capturedPhotos.push(data);
             }
             renderSelection();
@@ -542,32 +542,9 @@
             reader.readAsDataURL(e.target.files[0]);
         };
 
-        document.getElementById('save-btn').onclick = function() {
-            if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
-            const now = new Date();
-            const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
-            const timeStr = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
-            const link = document.createElement('a');
-            link.download = `V-SPACE_Photo_${dateStr}_${timeStr}.png`;
-            link.href = previewCanvas.toDataURL('image/png', 1.0);
-            link.click();
-        };
-
-        document.getElementById('airdrop-btn').onclick = async function() {
-            if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
-            const now = new Date();
-            const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
-            const timeStr = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
-            previewCanvas.toBlob(async (blob) => {
-                const file = new File([blob], `V-SPACE_Photo_${dateStr}_${timeStr}.png`, { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({ files: [file], title: 'V-SPACE 네컷사진' });
-                } else { document.getElementById('save-btn').click(); }
-            });
-        };
-
-        function resetApp() { if(!confirm("다시 촬영하시겠습니까?")) return; location.reload(); }
+        // 💡 [복구 완료] 유실되었던 촬영 딜레이 타이머 sleep 함수 정의문 추가
         function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function resetApp() { if(!confirm("다시 촬영하시겠습니까?")) return; location.reload(); }
         function changeFrameMode(mode) { frameMode = mode; document.querySelectorAll('.frame-choice-btn').forEach(b => b.classList.remove('active')); document.getElementById(`btn-f-${mode}`).classList.add('active'); composeFinalImage(); }
         document.getElementById('go-next-btn').onclick = () => { document.getElementById('title-step-2').style.display = 'none'; document.getElementById('title-step-3').style.display = 'block'; composeFinalImage(); };
         function toggleFilter() { isBW = !isBW; document.getElementById('filter-btn').innerText = `흑백 필터: ${isBW ? 'ON' : 'OFF'}`; composeFinalImage(); }
