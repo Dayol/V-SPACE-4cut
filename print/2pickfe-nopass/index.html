@@ -57,7 +57,6 @@
         .small-print-btn { padding: 15px 30px; font-size: 16px; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; margin-top: 15px; transition: 0.2s; }
         .small-print-btn:hover { background: #45a049; }
 
-        /* 💡 [신규] 피드백 제어 모달 그룹 추가 스타일 */
         .feedback-btn-group { display: flex; gap: 20px; justify-content: center; margin-top: 25px; }
         .f-btn { padding: 12px 35px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; }
         .f-btn.yes { background: #4CAF50; color: white; }
@@ -297,10 +296,12 @@
         }
 
         function closeAllModals() {
+            const isStatusOpen = document.getElementById('print-status-modal').style.display === 'block';
+            const isAdminOpen = document.getElementById('admin-auth-modal').style.display === 'block';
+            if (isStatusOpen || isAdminOpen) return;
+
             document.getElementById('settings-modal').style.display = 'none';
             document.getElementById('print-modal').style.display = 'none';
-            document.getElementById('print-status-modal').style.display = 'none';
-            document.getElementById('admin-auth-modal').style.display = 'none';
             document.getElementById('backdrop').style.display = 'none';
         }
 
@@ -309,7 +310,6 @@
             composeFinalImage();
         }
 
-        /* 💡 [수정] 인쇄 창이 뜬 직후 피드백 상태 검증 창을 자동 트리거 연동하는 제어부 */
         async function executeFinalPrint() {
             document.getElementById('print-modal').style.display = 'none';
             
@@ -331,32 +331,29 @@
             
             window.print();
 
-            // 키오스크 자동 출력 후 피드백 단계를 실시간으로 개방합니다.
             setTimeout(() => {
                 document.getElementById('print-status-modal').style.display = 'block';
                 document.getElementById('backdrop').style.display = 'block';
             }, 500);
         }
 
-        /* 💡 [신규] 출력 상태 분기 이벤트 제어 함수 */
         function handlePrintFeedback(success) {
-            document.getElementById('print-status-modal').style.display = 'none';
             if (success) {
-                // 예 누르면 첫화면으로 깨끗하게 초기화
+                document.getElementById('print-status-modal').style.display = 'none';
+                document.getElementById('backdrop').style.display = 'none';
                 location.reload();
             } else {
-                // 아니오 누르면 관리자 호출 인증 팝업 오픈
+                document.getElementById('print-status-modal').style.display = 'none';
                 document.getElementById('admin-password').value = '';
                 document.getElementById('admin-auth-modal').style.display = 'block';
             }
         }
 
-        /* 💡 [신규] 다올 마스터키(3261) 인증 후 롤백 처리 코어 */
         function verifyAdminKey() {
             const inputPw = document.getElementById('admin-password');
             if (inputPw.value === '3261') {
-                // 성공 시 에디터 단계(프레임 선택창)로 안전하게 복귀
-                closeAllModals();
+                document.getElementById('admin-auth-modal').style.display = 'none';
+                document.getElementById('backdrop').style.display = 'none';
             } else {
                 alert("비밀번호가 일치하지 않습니다.");
                 inputPw.value = '';
