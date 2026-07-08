@@ -7,13 +7,17 @@
         :root { --brand-color: #ff6b6b; --bg-gray: #f4f4f4; --cut-ratio: 1.5; } 
         body { font-family: 'Pretendard', sans-serif; background: var(--bg-gray); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #333; }
         .app-container { width: 100%; max-width: 1200px; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .step-section { display: none; width: 100%; animation: fadeIn 0.4s; }
+        .step-section { position: relative; display: none; width: 100%; animation: fadeIn 0.4s; }
         .step-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; z-index: 200; box-shadow: 0 0 100px rgba(0,0,0,0.3); width: 380px; max-height: 90vh; overflow-y: auto; }
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
         .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
+
+        /* 💡 [신규] 카메라 단계 전용 상단 뒤로가기 버튼 스타일 정의 */
+        .back-to-layout-btn { position: absolute; top: -10px; left: 20px; padding: 12px 24px; font-size: 16px; font-weight: bold; background: white; border: 2px solid #ddd; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .back-to-layout-btn:hover { background: #f9f9f9; border-color: var(--brand-color); color: var(--brand-color); }
 
         #cam-box { position: relative; width: 960px; aspect-ratio: var(--cut-ratio); background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.15); margin-bottom: 30px; display: flex; align-items: center; justify-content: center; }
         video, #snap-preview { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scaleX(-1); width: auto; height: 100%; min-width: 100%; object-fit: cover; } 
@@ -118,7 +122,7 @@
         <div class="print-modal-content">
             <h2 style="margin-bottom:10px;">🖨️ 사진 인쇄</h2>
             <p style="font-weight: bold; color: var(--brand-color); font-size: 1.1rem; margin-bottom: 5px;">확인서 작성 후 팀당 1장 출력가능</p>
-            <p style="font-weight: bold; color: red; margin-top: 0;">수량 변경은 불가합니다</p>
+            <p style="font-weight: bold; color: red; margin-top: 0;">인쇄하기 누른 후에는 에어드롭 불가</p>
             <button onclick="executeFinalPrint()" class="small-print-btn">진짜 인쇄하기</button>
         </div>
     </div>
@@ -164,6 +168,7 @@
         </section>
 
         <section id="step-1" class="step-section">
+            <button class="back-to-layout-btn" onclick="backToLayoutSelection()">◀ 뒤로가기</button>
             <div style="display:flex; flex-direction:column; align-items:center;">
                 <h1 id="main-title" style="font-size: 3.5rem; margin-bottom: 25px;">V-SPACE 네컷사진</h1>
                 <div id="cam-box">
@@ -239,6 +244,9 @@
 
         function initBackground() {
             customFrameImg = new Image();
+            if (window.location.protocol !== 'file:') {
+                customFrameImg.crossOrigin = "anonymous";
+            }
             customFrameImg.onload = () => composeFinalImage();
             customFrameImg.onerror = () => {
                 console.warn("축제기본.png 파일을 로드할 수 없거나 폴더에 없습니다.");
@@ -247,6 +255,9 @@
             customFrameImg.src = '축제기본.png'; 
 
             customPostcardFrameImg = new Image();
+            if (window.location.protocol !== 'file:') {
+                customPostcardFrameImg.crossOrigin = "anonymous";
+            }
             customPostcardFrameImg.onload = () => composeFinalImage();
             customPostcardFrameImg.onerror = () => {
                 console.warn("축제엽서.png 파일을 로드할 수 없거나 폴더에 없습니다.");
@@ -278,10 +289,116 @@
             }).catch(e => alert("웹캠을 연결할 수 없습니다: " + e));
         }
 
+        /* 💡 [신규] 뒤로가기 버튼 누르면 웹캠 스트림을 안전하게 정지시키고 0단계 첫화면으로 롤백해주는 리셋 함수 */
+        function backToLayoutSelection() {
+            if (video.srcObject) {
+                const tracks = video.srcObject.getTracks();
+                tracks.forEach(track => track.stop()); // 웹캠 꺼주기
+                video.srcObject = null;
+            }
+            // 촬영 시작하기 버튼 비활성화 상태 초기화
+            document.getElementById('start-btn').disabled = false;
+            timerEl.innerHTML = "시작을 눌러주세요";
+
+            document.getElementById('step-1').classList.remove('active');
+            document.getElementById('step-0').classList.add('active');
+        }
+
         function updateAllDynamicTexts() {
             const txt = document.getElementById('frame-text-input').value.trim();
             document.getElementById('main-title').innerText = txt ? txt + " 네컷사진" : "네컷사진";
             document.getElementById('btn-f-custom').innerText = txt ? txt + " 배경" : "네컷사진 배경";
+        }
+
+        async function buildCleanExportCanvas() {
+            const exportCanvas = document.createElement('canvas');
+            const eCtx = exportCanvas.getContext('2d');
+            
+            const cw = previewCanvas.width;
+            const ch = previewCanvas.height;
+            exportCanvas.width = cw;
+            exportCanvas.height = ch;
+
+            eCtx.fillStyle = (frameMode === 'black') ? '#000' : '#fff';
+            eCtx.fillRect(0, 0, cw, ch);
+
+            let calcTextY = ch - 120;
+
+            if (currentLayout === 'postcard') {
+                const marginX = 80, topMarginY = 160, gapX = 60, gapY = 60;
+                const photoW = (cw - (marginX * 2) - gapX) / 2; 
+                const photoH = photoW * (4 / 3); 
+                const coords = [
+                    { x: marginX, y: topMarginY }, { x: marginX + photoW + gapX, y: topMarginY },          
+                    { x: marginX, y: topMarginY + photoH + gapY }, { x: marginX + photoW + gapX, y: topMarginY + photoH + gapY } 
+                ];
+                
+                calcTextY = (topMarginY + photoH * 2 + gapY) + ((ch - (topMarginY + photoH * 2 + gapY)) / 2);
+
+                for(let i=0; i<4; i++) {
+                    if(selectedPhotos[i]) {
+                        const img = new Image(); img.src = selectedPhotos[i];
+                        await new Promise(r => img.onload = r);
+                        eCtx.save();
+                        if(isBW) eCtx.filter = 'grayscale(100%)';
+                        if(isBright) eCtx.filter = 'brightness(1.2) contrast(1.1)';
+                        eCtx.translate(cw, 0); eCtx.scale(-1, 1);
+                        eCtx.drawImage(img, cw - coords[i].x - photoW, coords[i].y, photoW, photoH);
+                        eCtx.restore();
+                    }
+                }
+            } else {
+                const padH = 40, photoTop = 40, photoGap = 25;
+                const photoW = cw - (padH * 2), photoH = photoW / 1.5; 
+                
+                calcTextY = (40 + (4 * photoH) + (3 * 25)) + ((ch - (40 + (4 * photoH) + (3 * 25))) / 2);
+
+                for(let i=0; i<4; i++) {
+                    const y = photoTop + (i * (photoH + photoGap));
+                    if(selectedPhotos[i]) {
+                        const img = new Image(); img.src = selectedPhotos[i];
+                        await new Promise(r => img.onload = r);
+                        eCtx.save();
+                        if(isBW) eCtx.filter = 'grayscale(100%)';
+                        if(isBright) eCtx.filter = 'brightness(1.2) contrast(1.1)';
+                        eCtx.translate(cw, 0); eCtx.scale(-1, 1);
+                        eCtx.drawImage(img, padH, y, photoW, photoH);
+                        eCtx.restore();
+                    }
+                }
+            }
+
+            let showText = (frameMode === 'custom') ? document.getElementById('custom-text-toggle').checked : document.getElementById('base-text-toggle').checked;
+            let showDate = (frameMode === 'custom') ? document.getElementById('custom-date-toggle').checked : document.getElementById('base-date-toggle').checked;
+            let finalColor = (frameMode === 'black' || (frameMode === 'custom' && document.querySelector('input[name="font-color"]:checked').value === 'white')) ? 'white' : 'black';
+
+            if (showText || showDate) {
+                eCtx.save();
+                eCtx.fillStyle = finalColor; eCtx.textAlign = "center";
+                if(showText) {
+                    const txt = document.getElementById('frame-text-input').value;
+                    if(txt) { eCtx.font = (currentLayout === 'postcard') ? "bold 80px sans-serif" : "bold 70px sans-serif"; eCtx.fillText(txt, cw/2, calcTextY - 30); }
+                }
+                if(showDate) {
+                    const now = new Date();
+                    const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+                    eCtx.font = (currentLayout === 'postcard') ? "45px sans-serif" : "40px sans-serif"; eCtx.fillText(dStr, cw/2, calcTextY + 60);
+                }
+                eCtx.restore();
+            }
+
+            if (frameMode === 'custom' && window.location.protocol !== 'file:') {
+                const activeFrameSrc = (currentLayout === 'postcard') ? customPostcardFrameImg.src : customFrameImg.src;
+                if (activeFrameSrc) {
+                    const frameOverlay = new Image();
+                    frameOverlay.crossOrigin = "anonymous";
+                    frameOverlay.src = activeFrameSrc;
+                    await new Promise(r => frameOverlay.onload = r);
+                    eCtx.drawImage(frameOverlay, 0, 0, cw, ch);
+                }
+            }
+
+            return exportCanvas;
         }
 
         function toggleSettings() {
@@ -525,185 +642,12 @@
             renderOverlayText(cw, ch, 0, 0, 0, textY, true);
         }
 
-        function renderOverlayText(cw, ch, photoTop, photoH, photoGap, customY = null, isPostcardMode = false) {
-            let showText, showDate, finalColor, useShadow = false;
-            if(frameMode === 'custom') {
-                showText = document.getElementById('custom-text-toggle').checked;
-                showDate = document.getElementById('custom-date-toggle').checked;
-                useShadow = document.getElementById('custom-shadow-toggle').checked;
-                finalColor = document.querySelector('input[name="font-color"]:checked').value === 'white' ? 'white' : 'black';
-            } else {
-                showText = document.getElementById('base-text-toggle').checked;
-                showDate = document.getElementById('base-date-toggle').checked;
-                finalColor = (frameMode === 'black') ? 'white' : 'black';
-            }
-
-            let textY;
-            if (customY !== null) { textY = customY; }
-            else {
-                const photoBottom = photoTop + (4 * photoH) + (3 * photoGap);
-                textY = photoBottom + ((ch - photoBottom) / 2);
-            }
-
-            if(showText || showDate) {
-                ctx.save();
-                ctx.filter = 'none';
-                ctx.fillStyle = finalColor; ctx.textAlign = "center";
-                if(useShadow) {
-                    ctx.shadowColor = (finalColor === 'white') ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
-                    ctx.shadowBlur = 10; ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
-                }
-                
-                if(showText) {
-                    const txt = document.getElementById('frame-text-input').value;
-                    if(txt) { 
-                        ctx.font = isPostcardMode ? "bold 80px sans-serif" : "bold 70px sans-serif"; 
-                        ctx.fillText(txt, cw/2, textY - 30); 
-                    }
-                }
-                if(showDate) {
-                    const now = new Date();
-                    const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-                    ctx.font = isPostcardMode ? "45px sans-serif" : "40px sans-serif"; 
-                    ctx.fillText(dStr, cw/2, textY + 60); 
-                }
-                ctx.restore();
-            }
-        }
-
-        document.getElementById('frame-input').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => { customFrameImg = img; composeFinalImage(); };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        document.getElementById('postcard-frame-input').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => { customPostcardFrameImg = img; composeFinalImage(); };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        // 💡 [수정] 오프라인(로컬) 환경 및 실서버(웹) 환경에 완벽 대응하는 가상 변환 레이어 연산 장치
-        async function buildCleanExportCanvas() {
-            const exportCanvas = document.createElement('canvas');
-            const eCtx = exportCanvas.getContext('2d');
-            
-            const cw = previewCanvas.width;
-            const ch = previewCanvas.height;
-            exportCanvas.width = cw;
-            exportCanvas.height = ch;
-
-            eCtx.fillStyle = (frameMode === 'black') ? '#000' : '#fff';
-            eCtx.fillRect(0, 0, cw, ch);
-
-            let calcTextY = ch - 120;
-
-            if (currentLayout === 'postcard') {
-                const marginX = 80, topMarginY = 160, gapX = 60, gapY = 60;
-                const photoW = (cw - (marginX * 2) - gapX) / 2; 
-                const photoH = photoW * (4 / 3); 
-                const coords = [
-                    { x: marginX, y: topMarginY }, { x: marginX + photoW + gapX, y: topMarginY },          
-                    { x: marginX, y: topMarginY + photoH + gapY }, { x: marginX + photoW + gapX, y: topMarginY + photoH + gapY } 
-                ];
-                
-                calcTextY = (topMarginY + photoH * 2 + gapY) + ((ch - (topMarginY + photoH * 2 + gapY)) / 2);
-
-                for(let i=0; i<4; i++) {
-                    if(selectedPhotos[i]) {
-                        const img = new Image(); img.src = selectedPhotos[i];
-                        await new Promise(r => img.onload = r);
-                        eCtx.save();
-                        if(isBW) eCtx.filter = 'grayscale(100%)';
-                        if(isBright) eCtx.filter = 'brightness(1.2) contrast(1.1)';
-                        eCtx.translate(cw, 0); eCtx.scale(-1, 1);
-                        eCtx.drawImage(img, cw - coords[i].x - photoW, coords[i].y, photoW, photoH);
-                        eCtx.restore();
-                    }
-                }
-            } else {
-                const padH = 40, photoTop = 40, photoGap = 25;
-                const photoW = cw - (padH * 2), photoH = photoW / 1.5; 
-                
-                calcTextY = (40 + (4 * photoH) + (3 * 25)) + ((ch - (40 + (4 * photoH) + (3 * 25))) / 2);
-
-                for(let i=0; i<4; i++) {
-                    const y = photoTop + (i * (photoH + photoGap));
-                    if(selectedPhotos[i]) {
-                        const img = new Image(); img.src = selectedPhotos[i];
-                        await new Promise(r => img.onload = r);
-                        eCtx.save();
-                        if(isBW) eCtx.filter = 'grayscale(100%)';
-                        if(isBright) eCtx.filter = 'brightness(1.2) contrast(1.1)';
-                        eCtx.translate(cw, 0); eCtx.scale(-1, 1);
-                        eCtx.drawImage(img, padH, y, photoW, photoH);
-                        eCtx.restore();
-                    }
-                }
-            }
-
-            let showText = (frameMode === 'custom') ? document.getElementById('custom-text-toggle').checked : document.getElementById('base-text-toggle').checked;
-            let showDate = (frameMode === 'custom') ? document.getElementById('custom-date-toggle').checked : document.getElementById('base-date-toggle').checked;
-            let finalColor = (frameMode === 'black' || (frameMode === 'custom' && document.querySelector('input[name="font-color"]:checked').value === 'white')) ? 'white' : 'black';
-
-            if (showText || showDate) {
-                eCtx.save();
-                eCtx.fillStyle = finalColor; eCtx.textAlign = "center";
-                if(showText) {
-                    const txt = document.getElementById('frame-text-input').value;
-                    if(txt) { eCtx.font = (currentLayout === 'postcard') ? "bold 80px sans-serif" : "bold 70px sans-serif"; eCtx.fillText(txt, cw/2, calcTextY - 30); }
-                }
-                if(showDate) {
-                    const now = new Date();
-                    const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-                    eCtx.font = (currentLayout === 'postcard') ? "45px sans-serif" : "40px sans-serif"; eCtx.fillText(dStr, cw/2, calcTextY + 60);
-                }
-                eCtx.restore();
-            }
-
-            // 💡 [핵심 교정] 로컬 file:/// 환경과 웹 서버 환경을 실시간 분기 처리하여 보안 크래시 전면 회피
-            if (frameMode === 'custom') {
-                const activeFrameSrc = (currentLayout === 'postcard') ? customPostcardFrameImg.src : customFrameImg.src;
-                if (activeFrameSrc) {
-                    const frameOverlay = new Image();
-                    // 웹서버 환경을 대비한 CORS 무력화 헤더 선언
-                    if (window.location.protocol !== 'file:') {
-                        frameOverlay.crossOrigin = "anonymous";
-                    }
-                    frameOverlay.src = activeFrameSrc;
-                    
-                    try {
-                        await new Promise((resolve, reject) => {
-                            frameOverlay.onload = resolve;
-                            frameOverlay.onerror = reject;
-                        });
-                        eCtx.drawImage(frameOverlay, 0, 0, cw, ch);
-                    } catch (err) {
-                        // 만약 로컬인 상태여서 에러가 트리거되면 안전하게 캔버스 병합을 넘김으로써 락 다운 차단
-                        console.warn("로컬 환경 보안 정책 우회 감지: 배경 병합 패스");
-                    }
-                }
-            }
-
-            return exportCanvas;
-        }
-
-        // 이미지 저장 최종 통합 실행 장치
         document.getElementById('save-btn').onclick = async function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             const now = new Date();
             const dateStr = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0');
             const timeStr = String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0');
             
-            // 💡 실서버 주소(https)로 배포되었을 때는 이 자체 데이터가 프레임까지 모두 완벽 소화합니다.
             if (window.location.protocol !== 'file:') {
                 try {
                     const dataUrl = previewCanvas.toDataURL('image/png', 1.0);
@@ -713,11 +657,10 @@
                     link.click();
                     return;
                 } catch(e) {
-                    console.log("CORS 폴백 시스템으로 전환합니다.");
+                    console.log("CORS 폴백 연산 기동");
                 }
             }
 
-            // 만약 로컬(file://) 환경이라면 보안 잠금 필터를 우회하여 다운로드를 강제 진행시킵니다.
             const cleanCanvas = await buildCleanExportCanvas();
             const dataUrl = cleanCanvas.toDataURL('image/png', 1.0);
             const link = document.createElement('a');
@@ -726,7 +669,6 @@
             link.click();
         };
 
-        // 공유/에어드롭 최종 통합 실행 장치
         document.getElementById('airdrop-btn').onclick = async function() {
             if(selectedPhotos.length < 4) return alert("사진 4장을 선택해주세요!");
             const now = new Date();
