@@ -15,7 +15,6 @@
         .modal-backdrop { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 199; }
         .settings-btn { position: fixed; top: 20px; right: 20px; z-index: 100; padding: 12px; background: white; border-radius: 50%; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 20px; }
 
-        /* 💡 [신규] 카메라 단계 전용 상단 뒤로가기 버튼 스타일 정의 */
         .back-to-layout-btn { position: absolute; top: -10px; left: 20px; padding: 12px 24px; font-size: 16px; font-weight: bold; background: white; border: 2px solid #ddd; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: 0.2s; display: flex; align-items: center; gap: 6px; }
         .back-to-layout-btn:hover { background: #f9f9f9; border-color: var(--brand-color); color: var(--brand-color); }
 
@@ -52,6 +51,7 @@
         .frame-choice-btn { width: 100%; margin-top: 5px; padding: 12px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 8px; font-size: 15px; }
         .frame-choice-btn.active { border-color: var(--brand-color); background: #fff0f0; }
 
+        /* 💡 [복구] 토글 및 입력 인풋 감지를 위한 설정창 속성 정렬 */
         .setting-section-title { font-weight: bold; font-size: 15px; margin: 15px 0 10px; padding-bottom: 5px; border-bottom: 2px solid var(--brand-color); display: block; color: var(--brand-color); }
         .option-item { margin-bottom: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
         .step3-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; text-align: left; width: 800px; }
@@ -89,13 +89,14 @@
     <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
     <div class="modal-backdrop" id="backdrop" onclick="closeAllModals()"></div>
 
+    <!-- 💡 [보완] 토글 시 즉시 화면에 렌더링되도록 모든 체크박스/라디오에 onchange="composeFinalImage()" 바인딩 완료 -->
     <div id="settings-modal" class="modal">
         <h3 style="margin-top:0">⚙️ 프레임 개별 설정</h3>
         <span class="setting-section-title">공통 문구 입력</span>
         <input type="text" id="frame-text-input" oninput="updateAllDynamicTexts()" value="V-SPACE" style="width:100%; padding:8px; margin-bottom:10px; box-sizing: border-box;">
         <span class="setting-section-title">기본 프레임 (흰색/검정)</span>
-        <label class="option-item"><input type="checkbox" id="base-text-toggle" checked> 문구 표시</label>
-        <label class="option-item"><input type="checkbox" id="base-date-toggle" checked> 날짜 표시</label>
+        <label class="option-item"><input type="checkbox" id="base-text-toggle" onchange="composeFinalImage()" checked> 문구 표시</label>
+        <label class="option-item"><input type="checkbox" id="base-date-toggle" onchange="composeFinalImage()" checked> 날짜 표시</label>
         
         <span class="setting-section-title">네컷사진용 이미지 프레임 업로드</span>
         <input type="file" id="frame-input" accept="image/*" style="width:100%; margin-bottom:10px; font-size:12px;">
@@ -103,12 +104,12 @@
         <span class="setting-section-title">엽서사진용 이미지 프레임 업로드</span>
         <input type="file" id="postcard-frame-input" accept="image/*" style="width:100%; margin-bottom:10px; font-size:12px;">
         
-        <label class="option-item"><input type="checkbox" id="custom-text-toggle"> 문구 표시</label>
-        <label class="option-item"><input type="checkbox" id="custom-date-toggle"> 날짜 표시</label>
-        <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" checked> 그림자 효과</label>
+        <label class="option-item"><input type="checkbox" id="custom-text-toggle" onchange="composeFinalImage()"> 문구 표시</label>
+        <label class="option-item"><input type="checkbox" id="custom-date-toggle" onchange="composeFinalImage()"> 날짜 표시</label>
+        <label class="option-item"><input type="checkbox" id="custom-shadow-toggle" onchange="composeFinalImage()" checked> 그림자 효과</label>
         <div style="font-size:13px;">글자 색상:
-            <label><input type="radio" name="font-color" value="black"> 검정</label>
-            <label><input type="radio" name="font-color" value="white" checked> 흰색</label>
+            <label><input type="radio" name="font-color" value="black" onchange="composeFinalImage()"> 검정</label>
+            <label><input type="radio" name="font-color" value="white" value="white" onchange="composeFinalImage()" checked> 흰색</label>
         </div>
         <button onclick="applySettings()" class="primary" style="width:100%; margin-top:20px; padding:12px; border:none; border-radius:8px; cursor:pointer;">설정 적용</button>
         
@@ -289,14 +290,12 @@
             }).catch(e => alert("웹캠을 연결할 수 없습니다: " + e));
         }
 
-        /* 💡 [신규] 뒤로가기 버튼 누르면 웹캠 스트림을 안전하게 정지시키고 0단계 첫화면으로 롤백해주는 리셋 함수 */
         function backToLayoutSelection() {
             if (video.srcObject) {
                 const tracks = video.srcObject.getTracks();
-                tracks.forEach(track => track.stop()); // 웹캠 꺼주기
+                tracks.forEach(track => track.stop());
                 video.srcObject = null;
             }
-            // 촬영 시작하기 버튼 비활성화 상태 초기화
             document.getElementById('start-btn').disabled = false;
             timerEl.innerHTML = "시작을 눌러주세요";
 
@@ -308,6 +307,63 @@
             const txt = document.getElementById('frame-text-input').value.trim();
             document.getElementById('main-title').innerText = txt ? txt + " 네컷사진" : "네컷사진";
             document.getElementById('btn-f-custom').innerText = txt ? txt + " 배경" : "네컷사진 배경";
+            composeFinalImage(); // 💡 인풋 변경 시 즉시 캔버스 리렌더링 강제 연동
+        }
+
+        // 💡 [복구 및 튜닝] preview용 상시 렌더링 컨텍스트 스코프와 연산 장치를 명확히 동기화함
+        function renderOverlayText(targetCtx, cw, ch, photoTop, photoH, photoGap, customY = null, isPostcardMode = false) {
+            let showText, showDate, finalColor, useShadow = false;
+            if(frameMode === 'custom') {
+                showText = document.getElementById('custom-text-toggle').checked;
+                showDate = document.getElementById('custom-date-toggle').checked;
+                useShadow = document.getElementById('custom-shadow-toggle').checked;
+                const selectedColorElement = document.querySelector('input[name="font-color"]:checked');
+                finalColor = (selectedColorElement && selectedColorElement.value === 'black') ? 'black' : 'white';
+            } else {
+                showText = document.getElementById('base-text-toggle').checked;
+                showDate = document.getElementById('base-date-toggle').checked;
+                finalColor = (frameMode === 'black') ? 'white' : 'black';
+            }
+
+            let textY;
+            if (customY !== null) { textY = customY; }
+            else {
+                if (isPostcardMode) {
+                    const marginX = 80, topMarginY = 160, gapX = 60, gapY = 60;
+                    const pW = (cw - (marginX * 2) - gapX) / 2; 
+                    const pH = pW * (4 / 3); 
+                    textY = (topMarginY + pH * 2 + gapY) + ((ch - (topMarginY + pH * 2 + gapY)) / 2);
+                } else {
+                    const photoBottom = photoTop + (4 * photoH) + (3 * photoGap);
+                    textY = photoBottom + ((ch - photoBottom) / 2);
+                }
+            }
+
+            if(showText || showDate) {
+                targetCtx.save();
+                targetCtx.filter = 'none';
+                targetCtx.fillStyle = finalColor; 
+                targetCtx.textAlign = "center";
+                if(useShadow) {
+                    targetCtx.shadowColor = (finalColor === 'white') ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.5)";
+                    targetCtx.shadowBlur = 10; targetCtx.shadowOffsetX = 3; targetCtx.shadowOffsetY = 3;
+                }
+                
+                if(showText) {
+                    const txt = document.getElementById('frame-text-input').value;
+                    if(txt) { 
+                        targetCtx.font = isPostcardMode ? "bold 80px sans-serif" : "bold 70px sans-serif"; 
+                        targetCtx.fillText(txt, cw/2, textY - 30); 
+                    }
+                }
+                if(showDate) {
+                    const now = new Date();
+                    const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+                    targetCtx.font = isPostcardMode ? "45px sans-serif" : "40px sans-serif"; 
+                    targetCtx.fillText(dStr, cw/2, textY + 60); 
+                }
+                targetCtx.restore();
+            }
         }
 
         async function buildCleanExportCanvas() {
@@ -323,8 +379,9 @@
             eCtx.fillRect(0, 0, cw, ch);
 
             let calcTextY = ch - 120;
+            let isPostcard = (currentLayout === 'postcard');
 
-            if (currentLayout === 'postcard') {
+            if (isPostcard) {
                 const marginX = 80, topMarginY = 160, gapX = 60, gapY = 60;
                 const photoW = (cw - (marginX * 2) - gapX) / 2; 
                 const photoH = photoW * (4 / 3); 
@@ -368,25 +425,6 @@
                 }
             }
 
-            let showText = (frameMode === 'custom') ? document.getElementById('custom-text-toggle').checked : document.getElementById('base-text-toggle').checked;
-            let showDate = (frameMode === 'custom') ? document.getElementById('custom-date-toggle').checked : document.getElementById('base-date-toggle').checked;
-            let finalColor = (frameMode === 'black' || (frameMode === 'custom' && document.querySelector('input[name="font-color"]:checked').value === 'white')) ? 'white' : 'black';
-
-            if (showText || showDate) {
-                eCtx.save();
-                eCtx.fillStyle = finalColor; eCtx.textAlign = "center";
-                if(showText) {
-                    const txt = document.getElementById('frame-text-input').value;
-                    if(txt) { eCtx.font = (currentLayout === 'postcard') ? "bold 80px sans-serif" : "bold 70px sans-serif"; eCtx.fillText(txt, cw/2, calcTextY - 30); }
-                }
-                if(showDate) {
-                    const now = new Date();
-                    const dStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-                    eCtx.font = (currentLayout === 'postcard') ? "45px sans-serif" : "40px sans-serif"; eCtx.fillText(dStr, cw/2, calcTextY + 60);
-                }
-                eCtx.restore();
-            }
-
             if (frameMode === 'custom' && window.location.protocol !== 'file:') {
                 const activeFrameSrc = (currentLayout === 'postcard') ? customPostcardFrameImg.src : customFrameImg.src;
                 if (activeFrameSrc) {
@@ -397,6 +435,9 @@
                     eCtx.drawImage(frameOverlay, 0, 0, cw, ch);
                 }
             }
+
+            // 💡 [핵심 보완] 가상 복제 캔버스에서도 글자가 배경 뒤로 숨지 않도록 맨 마지막 순서에 드로잉 바인딩
+            renderOverlayText(eCtx, cw, ch, 40, (cw - 80) / 1.5, 25, calcTextY, isPostcard);
 
             return exportCanvas;
         }
@@ -503,6 +544,7 @@
                 capturedPhotos.push(data);
             }
             renderSelection();
+            document.getElementById('step-1').append(document.querySelector('.back-to-layout-btn')); 
             document.getElementById('step-1').classList.remove('active');
             document.getElementById('step-common').classList.add('active');
         };
@@ -589,7 +631,8 @@
             if(frameMode === 'custom' && customFrameImg && customFrameImg.complete && customFrameImg.naturalWidth !== 0) {
                 ctx.drawImage(customFrameImg, 0, 0, cw, ch);
             }
-            renderOverlayText(cw, ch, photoTop, photoH, photoGap);
+            // 💡 [레이어 순서 보정] 일러스트 프레임 위에 글자가 덮이도록 마지막 라인에 호출 배치
+            renderOverlayText(ctx, cw, ch, photoTop, photoH, photoGap, null, false);
         }
 
         async function composePostcardImage() {
@@ -636,10 +679,8 @@
                 ctx.drawImage(customPostcardFrameImg, 0, 0, cw, ch);
             }
 
-            const photoBottom = coords[2].y + photoH;
-            const textY = photoBottom + ((ch - photoBottom) / 2);
-            
-            renderOverlayText(cw, ch, 0, 0, 0, textY, true);
+            // 💡 [레이어 순서 보정] 일러스트 엽서 프레임 위에 글자가 명확히 찍히도록 하단 배치
+            renderOverlayText(ctx, cw, ch, topMarginY, photoH, gapY, null, true);
         }
 
         document.getElementById('save-btn').onclick = async function() {
